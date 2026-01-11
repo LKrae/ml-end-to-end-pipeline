@@ -10,6 +10,10 @@ import geopandas as gpd
 # DATA PATHS — pulled from your OneDrive environment variable
 # ---------------------------------------------------------
 
+if "SPACENET_DATA_DIR" not in os.environ:
+    raise EnvironmentError("SPACENET_DATA_DIR is not set. Please configure it in your system environment variables.")
+
+
 DATA_DIR = Path(os.environ["SPACENET_DATA_DIR"])
 
 IMAGERY_DIR = DATA_DIR / "imagery"
