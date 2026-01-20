@@ -1,0 +1,9 @@
+deployments:
+  - name: sn7_metadata
+    entrypoint: src/etl/flows/metadata_flow.py:metadata_etl_flow
+    parameters:
+      pixel_csv_path: "C:/Users/kraem/OneDrive/[04] Data Science/[02] Learning/[04] Datasets/spacenet/SN7_csvs/sn7_train_ground_truth_pix.csv"
+      dbname: "sn7"
+      user: "postgres"
+      password: "admin"
+    schedule: null
