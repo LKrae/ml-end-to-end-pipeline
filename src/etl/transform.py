@@ -12,7 +12,7 @@ import math
 import geopandas as gpd
 from shapely.geometry import box
 
-from ingest import ParsedFilename
+from etl.ingest import ParsedFilename
 
 
 # -----------------------------
@@ -85,6 +85,7 @@ def build_chip_geometries(df):
                 utm_x=row["utm_x"],
                 utm_y=row["utm_y"],
                 utm_zone=row["utm_zone"],
+                aoi_id=row["aoi_id"],
             )
         ),
         axis=1,
@@ -99,10 +100,24 @@ def build_chip_geometries(df):
 # Spatial join: chips → AOIs
 # -----------------------------
 
-def join_chips_to_aois(chip_gdf: gpd.GeoDataFrame, aoi_gdf: gpd.GeoDataFrame):
+def join_chips_to_aois(chip_gdf, aoi_gdf):
     """
-    Assign each chip to an AOI by spatial join.
+    Attach AOI polygons to chips using aoi_id, not a spatial join.
+
+    Assumes:
+    - chip_gdf has an 'aoi_id' column
+    - aoi_gdf has one row per aoi_id with AOI geometry
     """
-    centroids = chip_gdf.copy()
-    centroids = centroids.set_geometry("centroid")
-    return centroids.sjoin(aoi_gdf, how="left", predicate="within")
+    if aoi_gdf is None:
+        # No AOIs available; just return chips as-is
+        chip_gdf["aoi_geometry"] = None
+        return chip_gdf
+
+    # Keep AOI geometry separate from chip geometry
+    aoi = aoi_gdf[["aoi_id", "geometry"]].rename(columns={"geometry": "aoi_geometry"})
+
+    # Simple attribute join on aoi_id
+    joined = chip_gdf.merge(aoi, on="aoi_id", how="left")
+
+    return joined
+
