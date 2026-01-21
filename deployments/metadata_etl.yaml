@@ -4,6 +4,6 @@ deployments:
     parameters:
       pixel_csv_path: "C:/Users/kraem/OneDrive/[04] Data Science/[02] Learning/[04] Datasets/spacenet/SN7_csvs/sn7_train_ground_truth_pix.csv"
       dbname: "sn7"
-      user: "your_username"
-      password: "your_password"
+      user: "PGUSER"
+      password: "PGPASSWORD"
     schedule: null
