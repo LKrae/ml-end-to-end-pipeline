@@ -77,8 +77,8 @@ print(f"  Fact rows: {len(fact)}")
 
 db_config = {
     "dbname": "sn7",
-    "user": "your_user_name",
-    "password": "your_password",  # <-- UPDATE THIS
+    "user": "PGUSER",
+    "password": "PGPASSWORD",  # <-- UPDATE THIS
     "host": "localhost",
     "port": 5432,
 }
