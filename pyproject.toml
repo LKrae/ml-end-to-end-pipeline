@@ -1,7 +1,28 @@
-[project]
-name = "ml-end-to-end-pipeline"
-version = "0.1.0"
-
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "ml_end_to_end_pipeline"
+version = "0.1.0"
+description = "End-to-end ML pipeline for chip-level building growth regression"
+authors = [
+    { name = "Lucas C. Kraemer" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "sqlalchemy",
+    "psycopg2-binary",
+    "joblib",
+    "matplotlib",
+    "fastapi",
+    "uvicorn",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

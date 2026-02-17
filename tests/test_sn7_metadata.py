@@ -37,6 +37,7 @@ def test_compute_chip_geometry():
         utm_x=1327,
         utm_y=3160,
         utm_zone=13,
+        aoi_id="AOI_1",
     )
 
     geom = compute_chip_geometry(parsed)
