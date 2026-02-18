@@ -69,6 +69,24 @@ Each row in the feature table represents:
 
 
 
+This project models **monthly building count changes** at the chip level.
+
+Each row in the feature table represents:
+
+- a single **chip** (spatial tile)  
+- at a single **time_id** (month)  
+- with its **building_count** and **prev_building_count**  
+
+### 🎯 Target variable
+
+
+
+\[
+\Delta_t = \text{building\_count}_t - \text{building\_count}_{t-1}
+\]
+
+
+
 This is a **regression problem**.
 
 ---
@@ -144,6 +162,165 @@ All tests pass:
 ```
 6 passed in X.XXs
 ```
+
+---
+
+# 🌐 FastAPI Inference Service (Week 5)
+
+A production‑ready API supports **single** and **batch** prediction.
+
+Start the API:
+
+```bash
+uvicorn ml_end_to_end_pipeline.api.app:app --reload
+```
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Health check |
+| `POST` | `/predict` | Single prediction |
+| `POST` | `/predict/batch` | Batch prediction |
+
+Swagger UI:
+
+```
+http://localhost:8000/docs
+```
+
+---
+
+# 🐳 Docker Deployment (Week 5)
+
+Build the image:
+
+```bash
+docker build -t building-growth-api .
+```
+
+Run the container:
+
+```bash
+docker run -p 8000:8000 building-growth-api
+```
+
+Test the API:
+
+```
+http://localhost:8000/health
+http://localhost:8000/docs
+```
+
+---
+
+# 📦 Installation
+
+Install the package in editable mode:
+
+```bash
+pip install -e .
+```
+
+Import it:
+
+```python
+from ml_end_to_end_pipeline.models.predict import run_single_inference
+```
+
+---
+
+# 🔮 Inference (CLI)
+
+### Single‑record
+
+```bash
+python -m ml_end_to_end_pipeline.models.predict \
+    --chip_id A123 \
+    --building_count 50 \
+    --prev_building_count 45
+```
+
+### Batch (CSV)
+
+```bash
+python -m ml_end_to_end_pipeline.models.predict \
+    --input data/new_data.csv \
+    --output predictions.csv
+```
+
+---
+
+# 🏗️ Architecture Diagram
+
+```
+                ┌──────────────────────────┐
+                │   Raw Pixel CSV (6.6M)   │
+                └─────────────┬────────────┘
+                              │
+                              ▼
+                        ETL Pipeline
+      (parse → geometry → AOI → star schema → PostGIS)
+                              │
+                              ▼
+                    Feature Engineering
+                              │
+                              ▼
+                     Temporal Train/Val/Test
+                              │
+                              ▼
+                    Regression Model (RF)
+                              │
+                              ▼
+                   Saved Model Artifact
+                              │
+          ┌───────────────┬───────────────┐
+          ▼               ▼               ▼
+   predict.py       FastAPI Service     Tests
+          │               │               │
+          ▼               ▼               ▼
+   CLI Inference     JSON API        CI-ready suite
+          │               │
+          └──────────► Docker ◄──────────┘
+```
+
+---
+
+## Week 6: API Testing, Logging, and Container Reliability
+
+Week 6 focused on validating the end‑to‑end inference API, improving observability, and ensuring the service runs reliably inside Docker. This was the first week where the full ML pipeline, model artifact, and FastAPI service were exercised together in a production‑like environment.
+
+### Key Achievements
+
+#### 1. API Testing & Validation
+- Successfully tested `/health`, `/predict`, and `/predict/batch` endpoints using `curl`.
+- Verified correct request/response schemas and JSON parsing.
+- Confirmed that the regression model loads correctly inside the container and produces valid predictions.
+
+#### 2. Logging Implementation
+- Added structured logging to the FastAPI application, including:
+  - Request‑level logs  
+  - Latency measurement  
+  - Model version tagging  
+- Integrated a `logging_config.yaml` file and updated Uvicorn to use it.
+- Installed `PyYAML` and validated that logs stream correctly via `docker logs -f`.
+
+#### 3. Import & Inference Stability Fixes
+- Resolved import errors by aligning API imports with the existing project structure (`models.predict`).
+- Updated the API to load the model once at startup for efficient inference.
+- Ensured DataFrame construction matches the model’s expected feature schema.
+
+#### 4. Docker Reliability Improvements
+- Rebuilt the Docker image with a clean build context and validated the internal file structure.
+- Ensured all dependencies (including scikit‑learn and PyYAML) are installed correctly.
+- Verified that the API runs cleanly in detached mode and is reachable at `localhost:8000`.
+
+### Outcome
+By the end of Week 6, the project had a fully functional, containerized inference API with reliable logging, stable imports, and validated prediction behavior. This foundation enables Week 7’s focus on testing, linting, and CI/CD.
+
+
+---
+
 
 ---
 
