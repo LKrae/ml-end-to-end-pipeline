@@ -69,6 +69,24 @@ Each row in the feature table represents:
 
 
 
+This project models **monthly building count changes** at the chip level.
+
+Each row in the feature table represents:
+
+- a single **chip** (spatial tile)  
+- at a single **time_id** (month)  
+- with its **building_count** and **prev_building_count**  
+
+### 🎯 Target variable
+
+
+
+\[
+\Delta_t = \text{building\_count}_t - \text{building\_count}_{t-1}
+\]
+
+
+
 This is a **regression problem**.
 
 ---
@@ -300,6 +318,130 @@ Week 6 focused on validating the end‑to‑end inference API, improving obser
 ### Outcome
 By the end of Week 6, the project had a fully functional, containerized inference API with reliable logging, stable imports, and validated prediction behavior. This foundation enables Week 7’s focus on testing, linting, and CI/CD.
 
+
+---
+
+
+---
+
+# 🌐 FastAPI Inference Service (Week 5)
+
+A production‑ready API supports **single** and **batch** prediction.
+
+Start the API:
+
+```bash
+uvicorn ml_end_to_end_pipeline.api.app:app --reload
+```
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Health check |
+| `POST` | `/predict` | Single prediction |
+| `POST` | `/predict/batch` | Batch prediction |
+
+Swagger UI:
+
+```
+http://localhost:8000/docs
+```
+
+---
+
+# 🐳 Docker Deployment (Week 5)
+
+Build the image:
+
+```bash
+docker build -t building-growth-api .
+```
+
+Run the container:
+
+```bash
+docker run -p 8000:8000 building-growth-api
+```
+
+Test the API:
+
+```
+http://localhost:8000/health
+http://localhost:8000/docs
+```
+
+---
+
+# 📦 Installation
+
+Install the package in editable mode:
+
+```bash
+pip install -e .
+```
+
+Import it:
+
+```python
+from ml_end_to_end_pipeline.models.predict import run_single_inference
+```
+
+---
+
+# 🔮 Inference (CLI)
+
+### Single‑record
+
+```bash
+python -m ml_end_to_end_pipeline.models.predict \
+    --chip_id A123 \
+    --building_count 50 \
+    --prev_building_count 45
+```
+
+### Batch (CSV)
+
+```bash
+python -m ml_end_to_end_pipeline.models.predict \
+    --input data/new_data.csv \
+    --output predictions.csv
+```
+
+---
+
+# 🏗️ Architecture Diagram
+
+```
+                ┌──────────────────────────┐
+                │   Raw Pixel CSV (6.6M)   │
+                └─────────────┬────────────┘
+                              │
+                              ▼
+                        ETL Pipeline
+      (parse → geometry → AOI → star schema → PostGIS)
+                              │
+                              ▼
+                    Feature Engineering
+                              │
+                              ▼
+                     Temporal Train/Val/Test
+                              │
+                              ▼
+                    Regression Model (RF)
+                              │
+                              ▼
+                   Saved Model Artifact
+                              │
+          ┌───────────────┬───────────────┐
+          ▼               ▼               ▼
+   predict.py       FastAPI Service     Tests
+          │               │               │
+          ▼               ▼               ▼
+   CLI Inference     JSON API        CI-ready suite
+          │               │
+          └──────────► Docker ◄──────────┘
+```
 
 ---
 
