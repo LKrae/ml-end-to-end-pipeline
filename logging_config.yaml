@@ -1,0 +1,29 @@
+version: 1
+formatters:
+  default:
+    format: "%(asctime)s | %(levelname)s | %(message)s"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: default
+    stream: ext://sys.stdout
+
+loggers:
+  uvicorn:
+    handlers: [console]
+    level: INFO
+  uvicorn.error:
+    handlers: [console]
+    level: INFO
+  uvicorn.access:
+    handlers: [console]
+    level: INFO
+  ml_end_to_end_pipeline:
+    handlers: [console]
+    level: INFO
+    propagate: false
+
+root:
+  handlers: [console]
+  level: INFO

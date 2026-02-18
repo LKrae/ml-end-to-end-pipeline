@@ -268,6 +268,41 @@ python -m ml_end_to_end_pipeline.models.predict \
 
 ---
 
+## Week 6: API Testing, Logging, and Container Reliability
+
+Week 6 focused on validating the end‑to‑end inference API, improving observability, and ensuring the service runs reliably inside Docker. This was the first week where the full ML pipeline, model artifact, and FastAPI service were exercised together in a production‑like environment.
+
+### Key Achievements
+
+#### 1. API Testing & Validation
+- Successfully tested `/health`, `/predict`, and `/predict/batch` endpoints using `curl`.
+- Verified correct request/response schemas and JSON parsing.
+- Confirmed that the regression model loads correctly inside the container and produces valid predictions.
+
+#### 2. Logging Implementation
+- Added structured logging to the FastAPI application, including:
+  - Request‑level logs  
+  - Latency measurement  
+  - Model version tagging  
+- Integrated a `logging_config.yaml` file and updated Uvicorn to use it.
+- Installed `PyYAML` and validated that logs stream correctly via `docker logs -f`.
+
+#### 3. Import & Inference Stability Fixes
+- Resolved import errors by aligning API imports with the existing project structure (`models.predict`).
+- Updated the API to load the model once at startup for efficient inference.
+- Ensured DataFrame construction matches the model’s expected feature schema.
+
+#### 4. Docker Reliability Improvements
+- Rebuilt the Docker image with a clean build context and validated the internal file structure.
+- Ensured all dependencies (including scikit‑learn and PyYAML) are installed correctly.
+- Verified that the API runs cleanly in detached mode and is reachable at `localhost:8000`.
+
+### Outcome
+By the end of Week 6, the project had a fully functional, containerized inference API with reliable logging, stable imports, and validated prediction behavior. This foundation enables Week 7’s focus on testing, linting, and CI/CD.
+
+
+---
+
 # 🗄️ Database Schema
 
 ### `dim_chip`

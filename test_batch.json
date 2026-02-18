@@ -1,0 +1,14 @@
+{
+  "records": [
+    {
+      "chip_id": "A123",
+      "building_count": 50,
+      "prev_building_count": 45
+    },
+    {
+      "chip_id": "B456",
+      "building_count": 120,
+      "prev_building_count": 118
+    }
+  ]
+}
