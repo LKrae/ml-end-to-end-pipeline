@@ -7,7 +7,7 @@ A production‑style system for geospatial ETL, temporal feature engineering, le
 
 This repository implements a complete machine learning engineering workflow using the SpaceNet7 multi‑temporal satellite imagery dataset. The system is designed to mirror real‑world ML engineering practices: modular ETL, reproducible feature engineering, leakage‑aware modeling, packaged inference, API deployment, containerization, and automated testing. The project processes 6.6M+ pixel‑level building observations, reconstructs spatial and temporal metadata, builds a star schema in Postgres/PostGIS, engineers chip‑level temporal features, trains a regression model to predict monthly building growth, and exposes the model through a FastAPI service with both single and batch prediction endpoints.
 
----
+--- 
 
 ## System Architecture
 
