@@ -82,7 +82,7 @@ def predict(request: PredictionRequest):
         f"Single prediction completed in {latency} ms | model_version={__version__}"
     )
 
-    return {"delta_count_pred": float(pred)}
+    return {"prediction": float(pred)}
 
 
 # ---------------------------------------------------------
@@ -134,12 +134,12 @@ def health_check():
 def predict_single(request: PredictionRequest):
     df = pd.DataFrame([request.dict()])
     pred = model.predict(df)[0]
-    return PredictionResponse(delta_count_pred=float(pred))
+    return PredictionResponse(prediction=float(pred))
 
 
 @app.post("/predict/batch", response_model=BatchPredictionResponse)
 def predict_batch(request: BatchPredictionRequest):
     df = pd.DataFrame([r.dict() for r in request.records])
     preds = model.predict(df)
-    responses = [PredictionResponse(delta_count_pred=float(p)) for p in preds]
+    responses = [PredictionResponse(prediction=float(p)) for p in preds]
     return BatchPredictionResponse(predictions=responses)
