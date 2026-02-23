@@ -1,65 +1,43 @@
-# 📘 SpaceNet7 End‑to‑End Geospatial ML Pipeline  
-*A production‑style geospatial ML system with ETL, feature engineering, temporal modeling, API deployment, testing, and Dockerization.*
+# SpaceNet7 End‑to‑End Geospatial ML Pipeline  
+A production‑style system for geospatial ETL, temporal feature engineering, leakage‑aware modeling, packaged inference, FastAPI deployment, testing, and CI.
 
 ---
 
-## 🚀 Overview
+## Overview
 
-This repository implements a **full machine learning engineering workflow** using the **SpaceNet7** multi‑temporal satellite imagery dataset. It demonstrates real‑world engineering practices across:
-
-- Large‑scale geospatial ETL  
-- Spatial processing and geometry reconstruction  
-- Data warehousing with Postgres/PostGIS  
-- Orchestration with Prefect  
-- Temporal feature engineering  
-- Leakage‑aware ML modeling  
-- Packaged inference pipeline  
-- FastAPI deployment (single + batch prediction)  
-- Dockerized serving  
-- Full pytest suite  
-- Clear, professional documentation  
-
-The goal is to mirror how **commercial ML engineering teams** build systems: modular, testable, containerized, deployable, and fully reproducible.
+This repository implements a complete machine learning engineering workflow using the SpaceNet7 multi‑temporal satellite imagery dataset. The system is designed to mirror real‑world ML engineering practices: modular ETL, reproducible feature engineering, leakage‑aware modeling, packaged inference, API deployment, containerization, and automated testing. The project processes 6.6M+ pixel‑level building observations, reconstructs spatial and temporal metadata, builds a star schema in Postgres/PostGIS, engineers chip‑level temporal features, trains a regression model to predict monthly building growth, and exposes the model through a FastAPI service with both single and batch prediction endpoints.
 
 ---
 
-# 🛰️ Geospatial ETL Pipeline (Weeks 1–2)
+## System Architecture
 
-The ETL pipeline ingests **6.6M+ pixel‑level building labels** from SpaceNet7 and reconstructs all spatial and temporal metadata from scratch.
+### ETL (Weeks 1–2)
 
-### **Key capabilities**
+The ETL pipeline reconstructs all spatial and temporal metadata from raw SpaceNet7 filenames and pixel‑level building labels.
+
+Key capabilities:
 - Parse filename‑encoded metadata (chip ID, AOI, year, month, UTM coordinates)
-- Build chip geometries (bounding boxes + centroids)
-- Generate AOI polygons from chip centroids
+- Reconstruct chip geometries (bounding boxes + centroids)
+- Build AOI polygons from chip centroids
 - Assign chips to AOIs via spatial join
-- Construct a **star schema** in Postgres/PostGIS:
+- Load a star schema into Postgres/PostGIS:
   - `dim_chip`
   - `dim_aoi`
   - `dim_time`
   - `fact_chip_observation`
-- Orchestrate the workflow using Prefect
+- Orchestrate with Prefect for reproducibility
 
-### **Dataset summary**
-- **6,664,652** pixel‑level building observations  
-- **60** chips across **30** AOIs  
+Dataset summary:
+- 6,664,652 building observations  
+- 60 chips across 30 AOIs  
 - Multiple time periods  
-- Raw CSV + filename‑encoded metadata  
-
-The ETL has been validated end‑to‑end and successfully loads all data into Postgres.
+- Fully validated ETL into Postgres
 
 ---
 
-# 🧠 ML Pipeline (Weeks 3–4)
+## ML Pipeline (Weeks 3–4)
 
-This project models **monthly building count changes** at the chip level.
-
-Each row in the feature table represents:
-
-- a single **chip** (spatial tile)  
-- at a single **time_id** (month)  
-- with its **building_count** and **prev_building_count**  
-
-### 🎯 Target variable
+The model predicts chip‑level monthly building growth:
 
 
 
@@ -91,83 +69,47 @@ This is a **regression problem**.
 
 ---
 
-## 📊 Feature Engineering
+### Feature Engineering
 
-Defined in `src/ml_end_to_end_pipeline/models/features.py`.
+Defined in `models/features.py`.
 
 Features include:
+- `chip_id` (categorical)
+- `building_count`
+- `prev_building_count`
+- `delta_count`
 
-- `chip_id` — categorical identifier  
-- `building_count` — current month  
-- `prev_building_count` — previous month  
-- `delta_count` — regression target  
+To prevent leakage, the pipeline drops:
+- `year`, `month`
+- `aoi_id`
+- `geometry`, `centroid`
 
-To avoid leakage, we **drop**:
+### Temporal Splitting
 
-- `year`, `month`  
-- `aoi_id`  
-- geometries (`geometry`, `centroid`)  
+Implemented in `models/split.py`.
 
----
-
-## 🕒 Temporal Splitting
-
-Implemented in `src/ml_end_to_end_pipeline/models/split.py`.
-
-- **Train:** earliest months  
-- **Validation:** middle months  
-- **Test:** most recent months  
+- Train: earliest months  
+- Validation: middle months  
+- Test: most recent months  
 
 This preserves causal structure and prevents future‑to‑past leakage.
 
----
+### Modeling Pipeline
 
-## 🤖 Modeling Pipeline
+Defined in `models/pipeline.py`.
 
-Defined in `src/ml_end_to_end_pipeline/models/pipeline.py`.
-
-- Numeric features scaled  
-- Categorical features one‑hot encoded  
-- Model: `RandomForestRegressor`  
+- Numeric scaling  
+- One‑hot encoding for categorical features  
+- `RandomForestRegressor`  
 - Hyperparameter tuning via `GridSearchCV`  
 - Evaluation via MAE, RMSE, R²  
-
-The best model is saved to:
-
-```
-models/best_regression_model.joblib
-```
+- Best model saved to `models/best_regression_model.joblib`
 
 ---
 
-# 🧪 Testing (Week 5)
+## Inference & FastAPI Service (Weeks 5–6)
 
-A full pytest suite validates:
-
-- Pipeline construction  
-- Model loading  
-- Single‑record inference  
-- Batch inference  
-- Feature engineering  
-- Metadata parsing  
-
-Run tests:
-
-```bash
-pytest -q
-```
-
-All tests pass:
-
-```
-6 passed in X.XXs
-```
-
----
-
-# 🌐 FastAPI Inference Service (Week 5)
-
-A production‑ready API supports **single** and **batch** prediction.
+The inference layer loads the trained model once at startup and exposes two endpoints.
 
 Start the API:
 
@@ -179,38 +121,52 @@ uvicorn ml_end_to_end_pipeline.api.app:app --reload
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/health` | Health check |
+| `GET` | `/health` | Service status |
 | `POST` | `/predict` | Single prediction |
 | `POST` | `/predict/batch` | Batch prediction |
 
-Swagger UI:
+Swagger UI:  
+`http://localhost:8000/docs`
 
+### Example: Single Prediction
+
+Input:
+```json
+{
+  "chip_id": "chip_001",
+  "building_count": 10,
+  "prev_building_count": 8
+}
 ```
-http://localhost:8000/docs
+
+### Example: Batch Prediction
+```json
+{
+  "records": [
+    {"chip_id": "chip_001", "building_count": 10, "prev_building_count": 8},
+    {"chip_id": "chip_002", "building_count": 20, "prev_building_count": 18}
+  ]
+}
 ```
+### Logging
+- request‑level logs
+- latency measurement
+- model version tagging
+- YAML‑based logging configuration
 
----
-
-# 🐳 Docker Deployment (Week 5)
+## Docker Deployment
 
 Build the image:
-
-```bash
 docker build -t building-growth-api .
-```
+
 
 Run the container:
-
-```bash
 docker run -p 8000:8000 building-growth-api
-```
 
-Test the API:
+### Test the API
+- http://localhost:8000/health
 
-```
-http://localhost:8000/health
-http://localhost:8000/docs
-```
+- http://localhost:8000/docs
 
 ---
 
@@ -461,78 +417,10 @@ Building‑level observations linked to chip, AOI, and time.
 
 ---
 
-# 📚 Tech Stack
-
-### **Languages & Libraries**
-- Python  
-- scikit‑learn  
-- pandas  
-- FastAPI  
-
-### **Infrastructure & Tooling**
-- Docker  
-- Prefect  
-- PostgreSQL + PostGIS  
-- GitHub Actions  
-- Azure (App Service + Container Registry)  
-- MLflow or DVC (future)  
-
----
-
-# 📂 Repository Structure
-
-```
-ml-end-to-end-pipeline/
-│
-├── deployments/
-│   └── metadata_etl.yaml
-│
-├── src/
-│   ├── etl/
-│   │   ├── metadata.py
-│   │   ├── load.py
-│   │   ├── transform.py
-│   │   ├── ingest.py
-│   │   ├── build_aoi_polygons.py
-│   │   ├── schema.py
-│   │   └── run_metadata_local.py
-│   │
-│   ├── pipelines/
-│   │   └── metadata_flow.py
-│   │
-│   ├── ml_end_to_end_pipeline/
-│   │   ├── models/
-│   │   ├── api/
-│   │   └── utils/
-│
-├── models/
-├── data/
-├── notebooks/
-├── tests/
-└── README.md
-```
-
----
-
-# 🗺️ Roadmap
-
-- **Week 1–2:** ETL + SQL + Prefect  
-- **Week 3–4:** ML Pipelines  
-- **Week 5:** API + Docker + Testing  
-- **Week 6:** Cloud Deployment  
-- **Week 7–8:** CI/CD  
-- **Week 9–10:** MLOps (MLflow, DVC)  
-- **Week 11–12:** Monitoring + Retraining  
-
----
-
-# 🔭 Future Improvements
-
-- Add monitoring dashboards  
-- Add automated retraining pipeline  
-- Add feature store integration  
-- Add spatial ML models (CNNs, U‑Nets)  
-- Integrate raster imagery  
-- Deploy to Azure App Service or AKS  
-
----
+# Future Improvements
+- Monitoring dashboards
+- Automated retraining
+- Feature store integration
+- Spatial ML models (CNNs, U‑Nets)
+- Raster imagery integration
+- Deployment to Azure App Service or AKS

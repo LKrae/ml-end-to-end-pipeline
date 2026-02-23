@@ -1,4 +1,4 @@
-import pandas as pd
+import numpy as np
 from ml_end_to_end_pipeline.models.predict import load_model, run_single_inference
 
 def test_model_loads():
@@ -7,7 +7,7 @@ def test_model_loads():
     assert model is not None
 
 def test_single_inference_runs():
-    """Ensure single-record inference returns a float."""
+    """Ensure single-record inference returns a numeric prediction."""
     model = load_model()
     pred = run_single_inference(
         model,
@@ -15,4 +15,6 @@ def test_single_inference_runs():
         building_count=50,
         prev_building_count=45
     )
-    assert isinstance(pred, float)
+
+    # Accept numpy scalar or Python float
+    assert isinstance(pred, (float, np.floating))

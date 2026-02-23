@@ -13,7 +13,7 @@ class BatchPredictionRequest(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    delta_count_pred: float
+    prediction: float
 
 
 class BatchPredictionResponse(BaseModel):
